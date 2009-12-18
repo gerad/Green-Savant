@@ -36,10 +36,13 @@ class MainHandler(webapp.RequestHandler):
     self.response.content_type = 'application/json'
     JSON.dump(data, self.response.out)
 
-class RestModel(db.Expando):
+class RestModel:
   @classmethod
-  def subclass_with_name(cls, name):
-    return type(name, (cls,), {})
+  def find_or_create_by_name(cls, name):
+    if name in globals():
+      return globals()[name]
+    else:
+      return type(name, (cls, db.Expando), {})
 
   @classmethod
   def create(cls, attrs):
@@ -69,17 +72,14 @@ class RestPath:
 
   def model(self):
     if not self.name: return None
-    if self.name in globals():
-      return globals()[self.name]
-    else:
-      return RestModel.subclass_with_name(self.name)
+    return RestModel.find_or_create_by_name(self.name)
 
   def entity(self):
-    return (self.model().get_by_id(self.key)
-      if self.model() and self.key else None)
+    if not (self.model() and self.key): return None
+    return self.model().get_by_id(self.key)
 
   def __name_and_key(self):
-    m = re.match(r'^/(\w+)/?(\d+)?$', self.path)
+    m = re.match(r'^/?(\w+)?/?(\d+)?$', self.path)
     name, key = m.groups()
     if key: key = int(key)
     if m: return name, key
