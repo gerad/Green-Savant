@@ -1,8 +1,10 @@
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import util
-from django.utils import simplejson as JSON
+from django.utils import simplejson
 from google.appengine.ext import db
 import re
+import datetime
+
 
 import pdb, sys
 debugger = pdb.Pdb(stdin=sys.__stdin__, stdout=sys.__stdout__)
@@ -25,16 +27,16 @@ class MainHandler(webapp.RequestHandler):
 
   def post(self):
     self.rest = RestPath(self.request.path)
-    attrs = JSON.loads(self.request.body)
+    attrs = simplejson.loads(self.request.body)
     self.__send_json(self.rest.model().create(attrs).dict())
 
   def delete(self):
     self.rest = RestPath(self.request.path)
-    self.__send_json(self.rest.entity().delete().dict())
+    self.__send_json(self.rest.entity().destroy().dict())
 
   def __send_json(self, data):
     self.response.content_type = 'application/json'
-    JSON.dump(data, self.response.out)
+    simplejson.dump(data, self.response.out)
 
 class RestModel:
   @classmethod
@@ -54,16 +56,29 @@ class RestModel:
     self.put()
     return self
 
-  def dict(self):
+  def dict(self, include=None, exclude=None):
     ret = dict()
-    for k in self.dynamic_properties():
-      ret[k] = getattr(self, k)
+    for k in self.allowed_attributes():
+      if include and k not in include: continue
+      if exclude and k in exclude: continue
+      ret[k] = self.__jsonify(getattr(self, k))
     if self.is_saved(): ret['id'] = self.key().id()
     return ret
 
-  def delete(self):
-    db.Expando.delete(self) # TODO find a better way
+  def allowed_attributes(self):
+    return self.properties().keys() + self.dynamic_properties()
+
+  def destroy(self):
+    self.delete()
     return self
+
+  def __jsonify(self, attr): # TODO find a better way
+    t = type(attr)
+    if t == datetime.datetime:
+      return str(attr)
+    if hasattr(attr, 'dict'):
+      return attr.dict()
+    return attr
 
 class RestPath:
   def __init__(self, path):
