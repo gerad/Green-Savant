@@ -4,7 +4,7 @@ from django.utils import simplejson
 from google.appengine.ext import db
 import re
 import datetime
-
+from dateutil.parser import parse as parse_date
 
 import pdb, sys
 debugger = pdb.Pdb(stdin=sys.__stdin__, stdout=sys.__stdout__)
@@ -52,7 +52,7 @@ class RestModel:
 
   def update_attributes(self, attrs):
     for k, v in attrs.items():
-      setattr(self, str(k), v)
+      self.__update_attribute(str(k), v)
     self.put()
     return self
 
@@ -72,10 +72,17 @@ class RestModel:
     self.delete()
     return self
 
+  def __update_attribute(self, attribute, value):
+    if attribute in self.properties():
+      property = type(self.properties()[attribute])
+      if property in [db.DateTimeProperty, db.DateProperty, db.TimeProperty]:
+        value = parse_date(value)
+    setattr(self, attribute, value)
+
   def __jsonify(self, attr): # TODO find a better way
     t = type(attr)
     if t == datetime.datetime:
-      return str(attr)
+      return attr.isoformat()
     if hasattr(attr, 'dict'):
       return attr.dict()
     return attr
@@ -99,6 +106,12 @@ class RestPath:
     if key: key = int(key)
     if m: return name, key
     else: return None, None
+
+class Log(db.Model, RestModel):
+  access_at = db.DateTimeProperty()
+  created_at = db.DateTimeProperty(auto_now_add=True)
+  updated_at = db.DateTimeProperty(auto_now=True)
+
 
 def main():
   application = webapp.WSGIApplication([(r'/.*', MainHandler)],
