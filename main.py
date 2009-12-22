@@ -102,9 +102,10 @@ class RestPath:
 
   def __name_and_key(self):
     m = re.match(r'^/?(\w+)?/?(\d+)?$', self.path)
-    name, key = m.groups()
-    if key: key = int(key)
-    if m: return name, key
+    if m:
+      name, key = m.groups()
+      if key: key = int(key)
+      return name, key
     else: return None, None
 
 class Log(db.Expando, RestModel):
