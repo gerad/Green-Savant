@@ -107,7 +107,7 @@ class RestPath:
     if m: return name, key
     else: return None, None
 
-class Log(db.Model, RestModel):
+class Log(db.Expando, RestModel):
   access_at = db.DateTimeProperty()
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
