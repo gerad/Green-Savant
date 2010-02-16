@@ -48,13 +48,29 @@ class RestModel:
 
   @classmethod
   def create(cls, attrs):
-    return cls().update_attributes(attrs)
+    return cls().update_attributes(attrs).save()
+
+  @classmethod
+  def find_or_new(attrs):
+    query = cls.all()
+    for k, v in attrs.items():
+      query.filter(k + '=', v)
+    res = query.find(1).pop()
+    if not res: res = cls().update_attributes(attrs)
+    return res
 
   def update_attributes(self, attrs):
     for k, v in attrs.items():
       self.__update_attribute(str(k), v)
+    return self
+
+  def save(self):
+    self.before_save()
     self.put()
     return self
+
+  def before_save(self):
+    pass # overwrite in subclasses
 
   def dict(self, include=None, exclude=None):
     ret = dict()
@@ -109,10 +125,61 @@ class RestPath:
     else: return None, None
 
 class Log(db.Expando, RestModel):
+  api_key = db.StringProperty()
+  url = db.StringProperty()
+  referrer = db.StringProperty()
+  seconds = db.IntegerProperty()
+  cache_hit = db.BooleanProperty()
   access_at = db.DateTimeProperty()
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
 
+  def before_save(self):
+    self.update_daily()
+    # self.update_monthly()
+    # self.update_domains()
+    # self.update_referrers()
+
+  def update_daily(self):
+    access_day = datetime.date(
+      self.access_at.year,
+      self.access_at.month,
+      self.access_at.day)
+    d = Daily.find_or_new({
+      'api_key': self.api_key
+      'day' : access_day })
+    d.requests += 1
+    d.seconds += self.seconds
+    d.cache_hits += (1 if self.cache_hit else 0)
+
+class Daily(db.Model, RestModel):
+  api_key = db.StringProperty()
+  day = db.DateTimeProperty()
+  requests = db.IntegerProperty(default=0)
+  cache_hits = db.IntegerProperty(default=0)
+  seconds = db.IntegerProperty(default=0)
+  created_at = db.DateTimeProperty(auto_now_add=True)
+  updated_at = db.DateTimeProperty(auto_now=True)
+
+class Referrers(db.Model, RestModel):
+  api_key = db.StringProperty()
+  referrer = db.StringProperty()
+  requests_day = db.IntegerProperty()
+  requests_7day = db.IntegerProperty()
+  requests_30day = db.IntegerProperty()
+  created_at = db.DateTimeProperty(auto_now_add=True)
+  updated_at = db.DateTimeProperty(auto_now=True)
+
+class Domains(db.Model, RestModel):
+  api_key = db.StringProperty()
+  domain = db.StringProperty()
+  days = db.ListProperty(db.DateTimeProperty)
+  requests = db.ListProperty(db.IntegerProperty)
+  requests_day = db.IntegerProperty()
+  requests_7day = db.IntegerProperty()
+  requests_30day = db.IntegerProperty()
+  created_at = db.DateTimeProperty(auto_now_add=True)
+  updated_at = db.DateTimeProperty(auto_now=True)
 
 def main():
   application = webapp.WSGIApplication([(r'/.*', MainHandler)],
