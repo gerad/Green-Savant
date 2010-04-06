@@ -1,3 +1,4 @@
+import datetime
 from google.appengine.ext import webapp
 from google.appengine.ext import db
 from google.appengine.ext.webapp import util
@@ -31,7 +32,7 @@ class ApiPath(rest.RestPath):
 class ApiSecurityError(Exception):
   pass
 
-class Log(db.Expando, rest.RestModel):
+class Log(rest.RestModel):
   api_key = db.StringProperty()
   url = db.StringProperty()
   referrer = db.StringProperty()
@@ -59,7 +60,7 @@ class Log(db.Expando, rest.RestModel):
     d.seconds += self.seconds
     d.cache_hits += (1 if self.cache_hit else 0)
 
-class Daily(db.Model, rest.RestModel):
+class Daily(rest.RestModel):
   api_key = db.StringProperty()
   day = db.DateTimeProperty()
   requests = db.IntegerProperty(default=0)
@@ -68,7 +69,7 @@ class Daily(db.Model, rest.RestModel):
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
 
-class Referrers(db.Model, rest.RestModel):
+class Referrers(rest.RestModel):
   api_key = db.StringProperty()
   referrer = db.StringProperty()
   requests_day = db.IntegerProperty()

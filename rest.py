@@ -1,9 +1,14 @@
+import logging
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from django.utils import simplejson
 import re
 import datetime
 from dateutil.parser import parse as parse_date
+import urllib2
+
+import pdb, sys
+debugger = pdb.Pdb(stdin=sys.__stdin__, stdout=sys.__stdout__)
 
 class RestHandler(webapp.RequestHandler):
   def get(self):
@@ -36,7 +41,7 @@ class RestHandler(webapp.RequestHandler):
   def handle_path(self):
     return RestPath(self.request.path)
 
-class RestModel(object):
+class RestModel(db.Expando):
   @classmethod
   def find_or_create_by_name(cls, name):
     for sub in cls.__subclasses__():
@@ -49,13 +54,13 @@ class RestModel(object):
     return cls().update_attributes(attrs).save()
 
   @classmethod
-  def find_or_new(attrs):
+  def find_or_new(cls, attrs):
     query = cls.all()
     for k, v in attrs.items():
       query.filter(k + '=', v)
-    res = query.find(1).pop()
+    res = query.fetch(1)
     if not res: res = cls().update_attributes(attrs)
-    return res
+    return res.pop()
 
   def update_attributes(self, attrs):
     for k, v in attrs.items():
