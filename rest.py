@@ -101,11 +101,21 @@ class RestModel(db.Expando):
 
   def __jsonify(self, attr): # TODO find a better way
     t = type(attr)
-    if t == datetime.datetime:
-      return attr.isoformat()
+    if t in [datetime.datetime, datetime.date, datetime.time]:
+      return self.__httpdate(attr)
     if hasattr(attr, 'dict'):
       return attr.dict()
     return attr
+
+  # http://stackoverflow.com/questions/225086/rfc-1123-date-representation-in-python
+  def __httpdate(self, dt):
+      if type(dt) == datetime.date:
+        dt = datetime.datetime.combine(dt, datetime.time())
+      weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][dt.weekday()]
+      month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+               "Oct", "Nov", "Dec"][dt.month - 1]
+      return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
+          dt.year, dt.hour, dt.minute, dt.second)
 
 class RestPath(object):
   def __init__(self, path):

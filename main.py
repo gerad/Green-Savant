@@ -59,6 +59,7 @@ class Log(rest.RestModel):
     d.requests += 1
     d.seconds += self.seconds
     d.cache_hits += (1 if self.cache_hit else 0)
+    d.save()
 
 class Daily(rest.RestModel):
   api_key = db.StringProperty()
