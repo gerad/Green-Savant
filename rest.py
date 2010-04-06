@@ -1,44 +1,41 @@
 from google.appengine.ext import webapp
-from google.appengine.ext.webapp import util
 from django.utils import simplejson
-from google.appengine.ext import db
 import re
 import datetime
 from dateutil.parser import parse as parse_date
 
 class RestHandler(webapp.RequestHandler):
-  @handle_path
   def get(self):
+    self.path = self.handle_path()
     if self.path.entity(): # show
       self.__send_json(self.path.entity().dict())
     elif self.path.model(): # list
-      self.__send_json([e.dict() for e in self.path.all_entities()])
+      self.__send_json([e.dict() for e in self.path.entities()])
     else: # / (root path)
       self.__send_json([self.request.path, self.request.body])
 
-  @handle_path
   def put(self):
+    self.path = self.handle_path()
     attrs = JSON.loads(self.request.body)
     self.__send_json(self.path.entity().update_attributes(attrs).dict())
 
-  @handle_path
   def post(self):
+    self.path = self.handle_path()
     attrs = simplejson.loads(self.request.body)
     self.__send_json(self.path.model().create(attrs).dict())
 
-  @handle_path
   def delete(self):
+    self.path = self.handle_path()
     self.__send_json(self.path.entity().destroy().dict())
 
   def __send_json(self, data):
     self.response.content_type = 'application/json'
     simplejson.dump(data, self.response.out)
 
-  def handle_path(func):
-    self.path = RestPath(self.request.path)
-    return func
+  def handle_path(self):
+    return RestPath(self.request.path)
 
-class RestModel:
+class RestModel(object):
   @classmethod
   def find_or_create_by_name(cls, name):
     if name in globals():
@@ -103,7 +100,7 @@ class RestModel:
       return attr.dict()
     return attr
 
-class RestPath:
+class RestPath(object):
   def __init__(self, path):
     self.path = path
     self.name, self.key = self.__name_and_key()
@@ -112,7 +109,7 @@ class RestPath:
     if not self.name: return None
     return RestModel.find_or_create_by_name(self.name)
 
-  def all_entities(self, model):
+  def entities(self):
     return self.model().all()
 
   def entity(self):
