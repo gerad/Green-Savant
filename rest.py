@@ -59,7 +59,8 @@ class RestModel(db.Expando):
     for k, v in attrs.items():
       query.filter(k + '=', v)
     res = query.fetch(1)
-    if not res: res = cls().update_attributes(attrs)
+    if not res:
+      return cls().update_attributes(attrs)
     return res.pop()
 
   def update_attributes(self, attrs):
@@ -94,7 +95,7 @@ class RestModel(db.Expando):
   def __update_attribute(self, attribute, value):
     if attribute in self.properties():
       property = type(self.properties()[attribute])
-      if property in [db.DateTimeProperty, db.DateProperty, db.TimeProperty]:
+      if property in [db.DateTimeProperty, db.DateProperty, db.TimeProperty] and type(value) in [str, unicode]:
         value = parse_date(value)
     setattr(self, attribute, value)
 

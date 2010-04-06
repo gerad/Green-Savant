@@ -62,7 +62,7 @@ class Log(rest.RestModel):
 
 class Daily(rest.RestModel):
   api_key = db.StringProperty()
-  day = db.DateTimeProperty()
+  day = db.DateProperty()
   requests = db.IntegerProperty(default=0)
   cache_hits = db.IntegerProperty(default=0)
   seconds = db.IntegerProperty(default=0)
