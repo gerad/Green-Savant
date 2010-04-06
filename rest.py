@@ -1,3 +1,4 @@
+from google.appengine.ext import db
 from google.appengine.ext import webapp
 from django.utils import simplejson
 import re
@@ -38,10 +39,10 @@ class RestHandler(webapp.RequestHandler):
 class RestModel(object):
   @classmethod
   def find_or_create_by_name(cls, name):
-    if name in globals():
-      return globals()[name]
-    else:
-      return type(name, (cls, db.Expando), {})
+    for sub in cls.__subclasses__():
+      if sub.__name__ == name:
+        return sub
+    return type(name, (cls, db.Expando), {})
 
   @classmethod
   def create(cls, attrs):

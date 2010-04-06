@@ -22,11 +22,11 @@ class ApiPath(rest.RestPath):
       raise ApiSecurityError
     return entity
 
-  def entities(self, model):
-    return self.model().filter('api_key =', self.api_key)
+  def entities(self):
+    return self.__super().entities().filter('api_key =', self.api_key)
 
   def __super(self): # python is retarded
-    return super(ApiPath, self)
+    return super(self.__class__, self)
 
 class ApiSecurityError(Exception):
   pass
