@@ -7,32 +7,36 @@ import datetime
 from dateutil.parser import parse as parse_date
 
 class RestHandler(webapp.RequestHandler):
+  @handle_path
   def get(self):
-    self.rest = RestPath(self.request.path)
-    if self.rest.entity(): # show
-      self.__send_json(self.rest.entity().dict())
-    elif self.rest.model(): # list
-      self.__send_json([e.dict() for e in self.rest.model().all()])
+    if self.path.entity(): # show
+      self.__send_json(self.path.entity().dict())
+    elif self.path.model(): # list
+      self.__send_json([e.dict() for e in self.path.all_entities()])
     else: # / (root path)
       self.__send_json([self.request.path, self.request.body])
 
+  @handle_path
   def put(self):
-    self.rest = RestPath(self.request.path)
     attrs = JSON.loads(self.request.body)
-    self.__send_json(self.rest.entity().update_attributes(attrs).dict())
+    self.__send_json(self.path.entity().update_attributes(attrs).dict())
 
+  @handle_path
   def post(self):
-    self.rest = RestPath(self.request.path)
     attrs = simplejson.loads(self.request.body)
-    self.__send_json(self.rest.model().create(attrs).dict())
+    self.__send_json(self.path.model().create(attrs).dict())
 
+  @handle_path
   def delete(self):
-    self.rest = RestPath(self.request.path)
-    self.__send_json(self.rest.entity().destroy().dict())
+    self.__send_json(self.path.entity().destroy().dict())
 
   def __send_json(self, data):
     self.response.content_type = 'application/json'
     simplejson.dump(data, self.response.out)
+
+  def handle_path(func):
+    self.path = RestPath(self.request.path)
+    return func
 
 class RestModel:
   @classmethod
@@ -107,6 +111,9 @@ class RestPath:
   def model(self):
     if not self.name: return None
     return RestModel.find_or_create_by_name(self.name)
+
+  def all_entities(self, model):
+    return self.model().all()
 
   def entity(self):
     if not (self.model() and self.key): return None
