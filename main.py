@@ -36,7 +36,7 @@ class Log(rest.RestModel):
   api_key = db.StringProperty()
   url = db.StringProperty()
   referrer = db.StringProperty()
-  seconds = db.IntegerProperty()
+  seconds = db.FloatProperty()
   cache_hit = db.BooleanProperty()
   access_at = db.DateTimeProperty()
   created_at = db.DateTimeProperty(auto_now_add=True)
@@ -66,10 +66,10 @@ class Daily(rest.RestModel):
   day = db.DateProperty()
   requests = db.IntegerProperty(default=0)
   cache_hits = db.IntegerProperty(default=0)
-  seconds = db.IntegerProperty(default=0)
+  seconds = db.FloatProperty(default=0.0)
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
-
+"""
 class Referrers(rest.RestModel):
   api_key = db.StringProperty()
   referrer = db.StringProperty()
@@ -78,7 +78,7 @@ class Referrers(rest.RestModel):
   requests_30day = db.IntegerProperty()
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
-"""
+
 class Domains(db.Model, rest.RestModel):
   api_key = db.StringProperty()
   domain = db.StringProperty()
