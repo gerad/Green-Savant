@@ -1,4 +1,4 @@
-application: green-savant
+application: greensavant
 version: 1
 runtime: python
 api_version: 1
