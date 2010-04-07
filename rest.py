@@ -36,7 +36,11 @@ class RestHandler(webapp.RequestHandler):
 
   def __send_json(self, data):
     self.response.content_type = 'application/json'
-    simplejson.dump(data, self.response.out)
+    json = simplejson.dumps(data)
+    callback = self.request.get('callback')
+    if callback:
+      json = ''.join([callback, '(', json, ');'])
+    self.response.out.write(json)
 
   def handle_path(self):
     return RestPath(self.request.path)
