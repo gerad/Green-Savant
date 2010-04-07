@@ -47,6 +47,10 @@ class RestHandler(webapp.RequestHandler):
 
 class RestModel(db.Expando):
   @classmethod
+  def default_order(cls):
+    return None
+
+  @classmethod
   def find_or_create_by_name(cls, name):
     for sub in cls.__subclasses__():
       if sub.__name__ == name:
@@ -62,10 +66,10 @@ class RestModel(db.Expando):
     query = cls.all()
     for k, v in attrs.items():
       query.filter(k + '=', v)
-    res = query.fetch(1)
+    res = query.get()
     if not res:
-      return cls().update_attributes(attrs)
-    return res.pop()
+      res = cls().update_attributes(attrs)
+    return res
 
   def update_attributes(self, attrs):
     for k, v in attrs.items():
@@ -122,8 +126,9 @@ class RestModel(db.Expando):
           dt.year, dt.hour, dt.minute, dt.second)
 
 class RestPath(object):
-  def __init__(self, path):
-    self.path = path
+  def __init__(self, request):
+    self.request = request
+    self.path = request.path
     self.name, self.key = self.__name_and_key()
 
   def model(self):
@@ -131,7 +136,11 @@ class RestPath(object):
     return RestModel.find_or_create_by_name(self.name)
 
   def entities(self):
-    return self.model().all()
+    order = self.request.get('order') or self.model().default_order()
+    q = self.model().all()
+    if order:
+      q.order(order)
+    return q
 
   def entity(self):
     if not (self.model() and self.key): return None

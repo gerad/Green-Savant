@@ -14,7 +14,7 @@ class ApiHandler(rest.RestHandler):
 
 class ApiPath(rest.RestPath):
   def __init__(self, request):
-    self.__super().__init__(request.path)
+    self.__super().__init__(request)
     self.api_key = request.get('api_key')
 
   def entity(self):
@@ -41,6 +41,10 @@ class Log(rest.RestModel):
   access_at = db.DateTimeProperty()
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
+
+  @classmethod
+  def default_order(cls):
+    return '-access_at'
 
   def before_save(self):
     self.update_daily()
