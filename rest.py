@@ -22,11 +22,13 @@ class RestHandler(webapp.RequestHandler):
 
   def put(self):
     self.path = self.handle_path()
+    logging.info(self.request.body)
     attrs = JSON.loads(self.request.body)
     self.__send_json(self.path.entity().update_attributes(attrs).dict())
 
   def post(self):
     self.path = self.handle_path()
+    logging.info(self.request.body)
     attrs = simplejson.loads(self.request.body)
     self.__send_json(self.path.model().create(attrs).dict())
 
