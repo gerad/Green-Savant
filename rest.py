@@ -16,7 +16,7 @@ class RestHandler(webapp.RequestHandler):
     if self.path.entity(): # show
       self.__send_json(self.path.entity().dict())
     elif self.path.model(): # list
-      self.__send_json([e.dict() for e in self.path.entities()])
+      self.__send_json([e.dict() for e in self.__limit(self.path.entities())])
     else: # / (root path)
       self.__send_json([self.request.path, self.request.body])
 
@@ -43,6 +43,13 @@ class RestHandler(webapp.RequestHandler):
     if callback:
       json = ''.join([callback, '(', json, ');'])
     self.response.out.write(json)
+
+  def __limit(self, query):
+    i = int(self.request.get('limit')) if self.request.get('limit') else 10
+    iter = query.__iter__()
+    while i > 0:
+      yield iter.next()
+      i -= 1
 
   def handle_path(self):
     return RestPath(self.request.path)
