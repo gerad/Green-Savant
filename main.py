@@ -73,6 +73,7 @@ class Daily(rest.RestModel):
   seconds = db.FloatProperty(default=0.0)
   created_at = db.DateTimeProperty(auto_now_add=True)
   updated_at = db.DateTimeProperty(auto_now=True)
+
 """
 class Referrers(rest.RestModel):
   api_key = db.StringProperty()

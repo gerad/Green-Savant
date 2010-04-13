@@ -74,7 +74,7 @@ class RestModel(db.Expando):
   def find_or_new(cls, attrs):
     query = cls.all()
     for k, v in attrs.items():
-      query.filter(k + '=', v)
+      query.filter(k + ' =', v)
     res = query.get()
     if not res:
       res = cls().update_attributes(attrs)
